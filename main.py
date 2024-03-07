@@ -7,6 +7,7 @@ from gql.transport.aiohttp import AIOHTTPTransport
 
 guild_id = 121452
 twister = 9899
+hatch = 9903
 hours = 3
 end_time = 3 * 60 * 60 * 1000
 
@@ -96,17 +97,20 @@ def player_id_map(report):
     return id_map
 
 
-def twister_filter(event):
-    ability = "killingAbilityGameID"
-    return ability in event and event[ability] == twister
+def filter_events_by_killing_blow(report, ability):
+    killing_blow = "killingAbilityGameID"
+    return filter(lambda x: (killing_blow in x and x[killing_blow] == ability), report["events"]["data"])
 
 
 def filter_twister_events(report):
-    return list(filter(twister_filter, report["events"]["data"]))
+    return filter_events_by_killing_blow(report, 9899)
 
+def filter_hatch_events(report):
+    return filter_events_by_killing_blow(report, 9903)
 
 def main():
     twister_count = Counter()
+    hatch_count = Counter()
 
     access_token = get_access_token()
     client = init_client(access_token)
@@ -114,8 +118,14 @@ def main():
     for report in reports:
         id_table = player_id_map(report)
         twister_events = filter_twister_events(report)
+        hatch_events = filter_hatch_events(report)
+
+        # print(list(twister_events))
+
         twister_count.update([id_table[x["targetID"]] for x in twister_events])
+        hatch_count.update([id_table[x["targetID"]] for x in hatch_events])
     print(twister_count)
+    print(hatch_count)
 
 
 if __name__ == "__main__":
