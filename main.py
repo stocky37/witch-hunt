@@ -60,31 +60,6 @@ def get_reports(session):
     return response["reportData"]["reports"]["data"]
 
 
-def get_events(session, report):
-    q = gql(
-        """
-        query($code: String!, $start_time: Float, $end_time: Float) {
-            reportData {
-                report(code: $code) {
-                    code
-                    events(dataType: Deaths, startTime: $start_time, endTime: $end_time) {
-                        data
-                    }
-                    playerDetails(startTime: $start_time, endTime: $end_time)
-                }
-            }
-        }
-        """
-    )
-
-    response = session.execute(q, variable_values={
-        "code": report["code"],
-        "start_time": 0,
-        "end_time": report["endTime"] - report["startTime"]
-    })
-    return response
-
-
 def player_id_map(report):
     id_map = {}
     player_details = report["playerDetails"]["data"]["playerDetails"]
@@ -105,8 +80,10 @@ def filter_events_by_killing_blow(report, ability):
 def filter_twister_events(report):
     return filter_events_by_killing_blow(report, 9899)
 
+
 def filter_hatch_events(report):
     return filter_events_by_killing_blow(report, 9903)
+
 
 def main():
     twister_count = Counter()
@@ -120,8 +97,6 @@ def main():
         twister_events = filter_twister_events(report)
         hatch_events = filter_hatch_events(report)
 
-        # print(list(twister_events))
-
         twister_count.update([id_table[x["targetID"]] for x in twister_events])
         hatch_count.update([id_table[x["targetID"]] for x in hatch_events])
     print(twister_count)
@@ -130,19 +105,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-event_query = gql(
-    """
-    query($report_code: String!, $fight_ids: [Int]) {
-        reportData {
-            report(code: $report_code) {
-                code
-                events(dataType: Deaths, fightIDs: $fight_ids) {
-                    data
-                }
-                playerDetails(fightIDs: $fight_ids)
-            }
-        }
-    }
-    """
-)
