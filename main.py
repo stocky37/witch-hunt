@@ -1,9 +1,9 @@
+import json
 import os
 from collections import Counter
-from datetime import datetime
+
 import requests
 from gql import Client, gql
-import json
 from gql.transport.aiohttp import AIOHTTPTransport
 
 guild_id = 121452
@@ -11,7 +11,6 @@ twister = 9899
 hatch = 9903
 hours = 3
 end_time = 3 * 60 * 60 * 1000
-
 
 timestamp = 0
 # timestamp = datetime(2024, 1, 1, 0, 0).timestamp() * 1000
@@ -36,7 +35,7 @@ def init_client(token):
         url="https://www.fflogs.com/api/v2/client",
         headers={"Authorization": "Bearer {0}".format(token)}
     )
-    return Client(transport=transport, fetch_schema_from_transport=True, execute_timeout=30)
+    return Client(transport=transport, fetch_schema_from_transport=True, execute_timeout=60)
 
 
 def get_reports(session):
