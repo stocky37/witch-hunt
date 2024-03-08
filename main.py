@@ -1,8 +1,9 @@
 import os
 from collections import Counter
-
+from datetime import datetime
 import requests
 from gql import Client, gql
+import json
 from gql.transport.aiohttp import AIOHTTPTransport
 
 guild_id = 121452
@@ -10,6 +11,11 @@ twister = 9899
 hatch = 9903
 hours = 3
 end_time = 3 * 60 * 60 * 1000
+
+
+timestamp = 0
+# timestamp = datetime(2024, 1, 1, 0, 0).timestamp() * 1000
+wipe_cutoff = 2
 
 
 def get_access_token():
@@ -36,12 +42,18 @@ def init_client(token):
 def get_reports(session):
     q = gql(
         """
-        query($guild_id: Int!, $start_time: Float, $end_time: Float) {
+        query(
+            $guild_id: Int!,
+            $start_time: Float,
+            $end_time: Float,
+            $timestamp: Float,
+            $wipe_cutoff: Int
+        ) {
             reportData {
-                reports(guildID: $guild_id, zoneID: 43) {
+                reports(guildID: $guild_id, zoneID: 43, startTime: $timestamp) {
                     data {
                         code
-                        events(dataType: Deaths, startTime: $start_time, endTime: $end_time) {
+                        events(dataType: Deaths, startTime: $start_time, endTime: $end_time, wipeCutoff: $wipe_cutoff) {
                             data
                         }
                         playerDetails(startTime: $start_time, endTime: $end_time)
@@ -55,7 +67,9 @@ def get_reports(session):
     response = session.execute(q, variable_values={
         "guild_id": guild_id,
         "start_time": 0,
-        "end_time": end_time
+        "end_time": end_time,
+        "timestamp": timestamp,
+        "wipe_cutoff": wipe_cutoff
     })
     return response["reportData"]["reports"]["data"]
 
@@ -99,8 +113,8 @@ def main():
 
         twister_count.update([id_table[x["targetID"]] for x in twister_events])
         hatch_count.update([id_table[x["targetID"]] for x in hatch_events])
-    print(twister_count)
-    print(hatch_count)
+    print(json.dumps(twister_count, indent=2))
+    print(json.dumps(hatch_count, indent=2))
 
 
 if __name__ == "__main__":
